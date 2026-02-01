@@ -57,11 +57,5 @@ Open http://localhost:8080.
 - **btc-tx-wasm**: WebAssembly bindings for the browser UI.
 - **wasm-pack**: builds Rust to WebAssembly for the web frontend.
 
-## Releases and Versioning
-- Tag releases like `v0.1` and `v0.2` in GitHub to show project milestones.
-- Publish release notes that summarize parser, CLI, and web UI changes.
-
-## CI (GitHub Actions)
-CI builds and tests the full workspace on pushes and pull requests to keep the parser and CLI stable.
 
 
