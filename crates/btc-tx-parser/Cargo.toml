@@ -1,0 +1,20 @@
+[package]
+name = "btc-tx-parser"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Bitcoin transaction parser library - parses raw hex transactions"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+hex.workspace = true
+sha2.workspace = true
+ripemd.workspace = true
+bs58.workspace = true
+bech32.workspace = true
+
+[dev-dependencies]
+pretty_assertions = "1.4"

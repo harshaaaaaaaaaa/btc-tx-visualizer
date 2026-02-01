@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Transaction Visualizer</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-orange: #db6d28;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: var(--text-secondary);
+        }
+
+        .input-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        textarea {
+            flex: 1;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            padding: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .btn {
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #2ea043;
+        }
+
+        .btn:disabled {
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .error {
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--accent-red);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--bg-tertiary);
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 0.75rem;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+        }
+
+        .info-value.highlight {
+            color: var(--accent-yellow);
+        }
+
+        .info-value.success {
+            color: var(--accent-green);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-segwit {
+            background-color: rgba(163, 113, 247, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .badge-legacy {
+            background-color: rgba(139, 148, 158, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .io-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .io-container {
+                grid-template-columns: 1fr;
+            }
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        .io-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .io-item {
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 0.75rem;
+            border-left: 3px solid transparent;
+        }
+
+        .io-item.input {
+            border-left-color: var(--accent-blue);
+        }
+
+        .io-item.output {
+            border-left-color: var(--accent-green);
+        }
+
+        .io-item.coinbase {
+            border-left-color: var(--accent-purple);
+        }
+
+        .io-index {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .io-value {
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .io-address {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-yellow);
+            word-break: break-all;
+        }
+
+        .io-type {
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+        }
+
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+            color: var(--text-secondary);
+            font-size: 2rem;
+        }
+
+        .json-output {
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.875rem;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sample-txs {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .sample-txs h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .sample-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sample-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>₿ Bitcoin Transaction Visualizer</h1>
+            <p>Parse and inspect raw Bitcoin transactions in your browser</p>
+        </header>
+
+        <div class="input-section">
+            <label for="tx-input">Raw Transaction Hex</label>
+            <textarea id="tx-input" placeholder="Enter raw transaction hex (e.g., 0100000001...)"></textarea>
+            <div class="buttons">
+                <button class="btn" id="parse-btn">Parse Transaction</button>
+                <button class="btn btn-secondary" id="clear-btn">Clear</button>
+            </div>
+            
+            <div class="sample-txs">
+                <h4>Try a sample transaction:</h4>
+                <button class="sample-btn" data-type="legacy">Legacy P2PKH</button>
+                <button class="sample-btn" data-type="segwit">Native SegWit</button>
+                <button class="sample-btn" data-type="coinbase">Coinbase</button>
+            </div>
+        </div>
+
+        <div class="error" id="error-box"></div>
+
+        <div class="loading" id="loading">
+            <p>⏳ Parsing transaction...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="tabs">
+                <button class="tab active" data-tab="visual">Visual</button>
+                <button class="tab" data-tab="details">Details</button>
+                <button class="tab" data-tab="json">JSON</button>
+            </div>
+
+            <div class="tab-content active" id="tab-visual">
+                <!-- Summary Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>Transaction Summary</span>
+                        <span class="badge" id="tx-type-badge">Legacy</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">TXID</div>
+                                <div class="info-value highlight" id="tx-txid">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Version</div>
+                                <div class="info-value" id="tx-version">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Size</div>
+                                <div class="info-value" id="tx-size">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Virtual Size</div>
+                                <div class="info-value" id="tx-vsize">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Weight</div>
+                                <div class="info-value" id="tx-weight">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Total Output</div>
+                                <div class="info-value success" id="tx-total">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Visualization -->
+                <div class="card">
+                    <div class="card-header">Transaction Flow</div>
+                    <div class="card-body">
+                        <div class="io-container">
+                            <div class="io-list" id="inputs-list"></div>
+                            <div class="flow-arrow">→</div>
+                            <div class="io-list" id="outputs-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-details">
+                <!-- Inputs -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>Inputs</span>
+                        <span id="input-count">0</span>
+                    </div>
+                    <div class="card-body" id="inputs-detail"></div>
+                </div>
+
+                <!-- Outputs -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>Outputs</span>
+                        <span id="output-count">0</span>
+                    </div>
+                    <div class="card-body" id="outputs-detail"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-json">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Raw JSON</span>
+                        <button class="btn btn-secondary" id="copy-json" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Copy</button>
+                    </div>
+                    <div class="card-body">
+                        <pre class="json-output" id="json-output"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Sample transactions for testing
+        const SAMPLE_TXS = {
+            legacy: '0100000001c997a5e56e104102fa209c6a852dd90660a20b2d9c352423edce25857fcd3704000000004847304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901ffffffff0200ca9a3b00000000434104ae1a62fe09c5f51b13905f07f06b99a2f7159b2225f374cd378d71302fa28414e7aab37397f554a7df5f142c21c1b7303b8a0626f1baded5c72a704f7e6cd84cac00286bee0000000043410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac00000000',
+            segwit: '020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0502e8030101ffffffff0200f2052a0100000016001496ba8ba89947e739cd4e48507f9d26f47ed31c4e0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000',
+            coinbase: '020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0502e8030101ffffffff0200f2052a0100000016001496ba8ba89947e739cd4e48507f9d26f47ed31c4e0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000'
+        };
+
+        let wasm;
+
+        async function initWasm() {
+            try {
+                // Try to load WASM module
+                const wasmModule = await import('./pkg/btc_tx_wasm.js');
+                await wasmModule.default();
+                wasm = wasmModule;
+                console.log('WASM module loaded successfully');
+            } catch (e) {
+                console.warn('WASM not available, using JavaScript fallback', e);
+                wasm = null;
+            }
+        }
+
+        function parseTransaction(hex) {
+            if (wasm) {
+                return wasm.parse_transaction(hex);
+            } else {
+                // Fallback: show message that WASM needs to be built
+                throw new Error('WASM module not loaded. Run: cd crates/btc-tx-wasm && wasm-pack build --target web --out-dir ../../web/pkg');
+            }
+        }
+
+        function satsToBtc(sats) {
+            return (sats / 100000000).toFixed(8);
+        }
+
+        function truncateHash(hash, start = 8, end = 8) {
+            if (hash.length <= start + end + 3) return hash;
+            return `${hash.slice(0, start)}...${hash.slice(-end)}`;
+        }
+
+        function updateUI(tx) {
+            // Update summary
+            document.getElementById('tx-txid').textContent = truncateHash(tx.txid, 16, 8);
+            document.getElementById('tx-version').textContent = tx.version;
+            document.getElementById('tx-size').textContent = `${tx.raw_size} bytes`;
+            document.getElementById('tx-vsize').textContent = `${tx.is_segwit ? Math.ceil((tx.weight + 3) / 4) : tx.raw_size} vbytes`;
+            document.getElementById('tx-weight').textContent = `${tx.weight} WU`;
+            document.getElementById('tx-total').textContent = `${tx.total_output_btc.toFixed(8)} BTC`;
+
+            // Update badge
+            const badge = document.getElementById('tx-type-badge');
+            if (tx.is_segwit) {
+                badge.textContent = 'SegWit';
+                badge.className = 'badge badge-segwit';
+            } else {
+                badge.textContent = 'Legacy';
+                badge.className = 'badge badge-legacy';
+            }
+
+            // Update counts
+            document.getElementById('input-count').textContent = tx.inputs.length;
+            document.getElementById('output-count').textContent = tx.outputs.length;
+
+            // Update flow visualization
+            const inputsList = document.getElementById('inputs-list');
+            const outputsList = document.getElementById('outputs-list');
+            
+            inputsList.innerHTML = tx.inputs.map((input, i) => `
+                <div class="io-item input ${input.is_coinbase ? 'coinbase' : ''}">
+                    <div class="io-index">${input.is_coinbase ? 'COINBASE' : `Input #${i}`}</div>
+                    ${!input.is_coinbase ? `
+                        <div class="io-address">${truncateHash(input.txid)}:${input.vout}</div>
+                    ` : ''}
+                    ${input.value ? `<div class="io-value">${satsToBtc(input.value)} BTC</div>` : ''}
+                </div>
+            `).join('');
+
+            outputsList.innerHTML = tx.outputs.map((output, i) => `
+                <div class="io-item output">
+                    <div class="io-index">Output #${i}</div>
+                    <div class="io-value">${output.value_btc.toFixed(8)} BTC</div>
+                    <div class="io-type">${output.script_type}</div>
+                    ${output.address ? `<div class="io-address">${truncateHash(output.address.mainnet, 12, 8)}</div>` : ''}
+                </div>
+            `).join('');
+
+            // Update details
+            const inputsDetail = document.getElementById('inputs-detail');
+            inputsDetail.innerHTML = tx.inputs.map((input, i) => `
+                <div class="info-grid" style="margin-bottom: 1rem;">
+                    <div class="info-item">
+                        <div class="info-label">Index</div>
+                        <div class="info-value">${i}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Previous TX</div>
+                        <div class="info-value">${input.is_coinbase ? 'COINBASE' : truncateHash(input.txid)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Vout</div>
+                        <div class="info-value">${input.vout}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Sequence</div>
+                        <div class="info-value">0x${input.sequence.toString(16).padStart(8, '0')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">ScriptSig Size</div>
+                        <div class="info-value">${input.script_sig.size} bytes</div>
+                    </div>
+                    ${input.witness ? `
+                        <div class="info-item">
+                            <div class="info-label">Witness Items</div>
+                            <div class="info-value">${input.witness.length}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            const outputsDetail = document.getElementById('outputs-detail');
+            outputsDetail.innerHTML = tx.outputs.map((output, i) => `
+                <div class="info-grid" style="margin-bottom: 1rem;">
+                    <div class="info-item">
+                        <div class="info-label">Index</div>
+                        <div class="info-value">${i}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Value</div>
+                        <div class="info-value success">${output.value_btc.toFixed(8)} BTC</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Value (sats)</div>
+                        <div class="info-value">${output.value.toLocaleString()}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Script Type</div>
+                        <div class="info-value">${output.script_type}</div>
+                    </div>
+                    ${output.address ? `
+                        <div class="info-item" style="grid-column: span 2;">
+                            <div class="info-label">Address (mainnet)</div>
+                            <div class="info-value highlight">${output.address.mainnet}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            // Update JSON
+            document.getElementById('json-output').textContent = JSON.stringify(tx, null, 2);
+        }
+
+        // Event listeners
+        document.getElementById('parse-btn').addEventListener('click', async () => {
+            const hex = document.getElementById('tx-input').value.trim();
+            if (!hex) {
+                showError('Please enter a transaction hex');
+                return;
+            }
+
+            hideError();
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result').classList.remove('active');
+
+            try {
+                const tx = parseTransaction(hex);
+                updateUI(tx);
+                document.getElementById('result').classList.add('active');
+            } catch (e) {
+                showError(e.message || 'Failed to parse transaction');
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            document.getElementById('tx-input').value = '';
+            document.getElementById('result').classList.remove('active');
+            hideError();
+        });
+
+        // Sample transaction buttons
+        document.querySelectorAll('.sample-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                document.getElementById('tx-input').value = SAMPLE_TXS[type];
+            });
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // Copy JSON
+        document.getElementById('copy-json').addEventListener('click', () => {
+            const json = document.getElementById('json-output').textContent;
+            navigator.clipboard.writeText(json);
+        });
+
+        function showError(message) {
+            const errorBox = document.getElementById('error-box');
+            errorBox.textContent = message;
+            errorBox.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('error-box').classList.remove('active');
+        }
+
+        // Initialize
+        initWasm();
+    </script>
+</body>
+</html>

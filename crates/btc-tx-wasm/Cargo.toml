@@ -1,0 +1,25 @@
+[package]
+name = "btc-tx-wasm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "WebAssembly Bitcoin transaction parser for browser usage"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+btc-tx-parser = { path = "../btc-tx-parser" }
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.6"
+serde.workspace = true
+serde_json.workspace = true
+console_error_panic_hook = "0.1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+opt-level = "s"
+lto = true

@@ -1,0 +1,20 @@
+[package]
+name = "btc-tx-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "CLI tool for parsing and inspecting Bitcoin transactions"
+
+[[bin]]
+name = "btc-tx-inspector"
+path = "src/main.rs"
+
+[dependencies]
+btc-tx-parser = { path = "../btc-tx-parser" }
+clap.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+colored = "2.1"
+atty = "0.2"
+chrono = "0.4"
