@@ -5,6 +5,9 @@ Rust tool to parse and visualize raw Bitcoin transactions, with CLI and Web UI.
 ## Summary
 Parses legacy and SegWit transactions, detects script types, derives addresses, and reports metrics like size, vsize, weight, and fees. Outputs in JSON, pretty text, summary, or ASCII.
 
+## Live Demo
+GitHub Pages build: https://harshaaaaaaaaaa.github.io/btc-tx-visualizer/
+
 ## How Parsing Works
 - Varint parsing: input/output counts, script sizes, and witness stack sizes are varint encoded. Values 0x00-0xfc are single byte, 0xfd reads 2 bytes LE, 0xfe reads 4 bytes LE, and 0xff reads 8 bytes LE.
 - SegWit detection: after the version, the parser peeks for marker 0x00 and flag 0x01. If present, it parses inputs/outputs normally, then reads witness stacks for each input after outputs.
@@ -56,6 +59,10 @@ Open http://localhost:8080.
 - **btc-tx-cli**: CLI interface for parsing and output formatting.
 - **btc-tx-wasm**: WebAssembly bindings for the browser UI.
 - **wasm-pack**: builds Rust to WebAssembly for the web frontend.
+
+## Releases
+- Each release publishes the web UI to GitHub Pages for easy sharing. 
+    Happy learning :)
 
 
 
